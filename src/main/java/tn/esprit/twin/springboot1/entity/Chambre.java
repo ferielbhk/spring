@@ -24,7 +24,7 @@ public class Chambre implements Serializable {
     private Long numeroChambre;
     @Enumerated(EnumType.STRING)
     private TypeChambre typeC;
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL ,fetch = FetchType.EAGER)
     List<Reservation> reservations ;
     @JsonIgnore
     @ManyToOne
