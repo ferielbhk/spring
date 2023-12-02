@@ -7,13 +7,16 @@ import org.springframework.stereotype.Service;
 import tn.esprit.twin.springboot1.entity.Chambre;
 import tn.esprit.twin.springboot1.entity.Reservation;
 import tn.esprit.twin.springboot1.entity.TypeChambre;
+import tn.esprit.twin.springboot1.entity.TypeChambrePourcentage;
 import tn.esprit.twin.springboot1.repository.BlocRepository;
 import tn.esprit.twin.springboot1.repository.ChambreRepository;
 import tn.esprit.twin.springboot1.repository.ReservationRepository;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.time.temporal.TemporalAdjusters.firstDayOfYear;
@@ -54,7 +57,7 @@ public class ChambreServiceImpl implements  ChambreService{
         return chambreRepository.getChambresParNomBloc(nomBloc);
     }
 
-    //@Scheduled(fixedRate = 120000)
+    /*@Scheduled(fixedRate = 120000)
     public void pourcentageChambreParTypeChambre() {
 
         Long totalchbres = chambreRepository.count();
@@ -66,7 +69,7 @@ public class ChambreServiceImpl implements  ChambreService{
                         System.out.printf("nbre total des chbres "+totalchbres +" " +
                                           "Pourcentage de chambres de type %s: %.2f%%\n" , i , pourcentage );}
 
-    }
+    }*/
     /*@Scheduled(fixedRate = 60000)
     public void nbPlacesDispo(){
         List<Chambre>ch =chambreRepository.findAll();
@@ -99,5 +102,42 @@ public class ChambreServiceImpl implements  ChambreService{
     }
 
      */
+    /*@Override
+    public String calculerPourcentageChambreParTypeChambre(boolean estValide) {
+        Long totalChambres = chambreRepository.count();
+
+        StringBuilder resultBuilder = new StringBuilder();
+
+        for (TypeChambre typeChambre : TypeChambre.values()) {
+            Float total = chambreRepository.nbrChambreParType(typeChambre, estValide);
+            float pourcentage = (total / totalChambres) * 100;
+
+            resultBuilder.append(String.format("Nombre total des chambres %d. Pourcentage de chambres de type %s %s: %.2f%%\n",
+                    totalChambres, typeChambre, estValide ? "réservées" : "non réservées", pourcentage));
+        }
+
+        return resultBuilder.toString();
+    }*/
+
+    @Override
+    public HashSet<TypeChambrePourcentage> calculerPourcentageChambreParTypeChambre1(boolean estValide) {
+        Long totalChambres = chambreRepository.count();
+        HashSet<TypeChambrePourcentage> resultSet = new HashSet<>();
+
+        for (TypeChambre typeChambre : TypeChambre.values()) {
+            Float total = chambreRepository.nbrChambreParType(typeChambre, estValide);
+            float pourcentage = (total / totalChambres) * 100;
+
+            TypeChambrePourcentage chambreInfo = new TypeChambrePourcentage(typeChambre, pourcentage);
+            resultSet.add(chambreInfo);
+        }
+
+        return resultSet;
+    }
+
+
 
 }
+
+
+

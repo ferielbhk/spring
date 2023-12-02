@@ -6,12 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 @Getter
 @Setter
+@Slf4j
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -28,7 +31,7 @@ public class Bloc implements Serializable {
     @JsonIgnore
 
     @OneToMany(mappedBy="bloc" , cascade = CascadeType.ALL , fetch=FetchType.EAGER)
-    private Set<Chambre> chambre;
+    private List<Chambre> chambre;
 
 
 

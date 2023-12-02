@@ -1,10 +1,16 @@
 package tn.esprit.twin.springboot1.controller;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import tn.esprit.twin.springboot1.CapaciteMaxAtteinteException;
 import tn.esprit.twin.springboot1.entity.Chambre;
 import tn.esprit.twin.springboot1.entity.Reservation;
+import tn.esprit.twin.springboot1.services.ReservationServicaAvancé;
 import tn.esprit.twin.springboot1.services.ReservationService;
 import tn.esprit.twin.springboot1.services.ReservationServiceImpl;
 
@@ -15,6 +21,8 @@ import java.util.List;
 @RestController
 public class ReservationController {
     ReservationService reservationService;
+
+    ReservationServicaAvancé reservationServicaAvancé;
     @GetMapping("getallreservations")
     public List<Reservation> getReservation() {
         List<Reservation> listReservation = reservationService.retrieveAllReservations();
@@ -49,5 +57,23 @@ public class ReservationController {
             @RequestParam("dateFin") @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateFin
     ) {
         return reservationService.getReservationParAnneeUniversitaire(dateDebut, dateFin);
+    }
+
+    /*@PostMapping("/add")
+    public Reservation addReservation(@RequestParam long idBloc, @RequestParam long cin) {
+        return reservationServicaAvancé.ajouterReservation(idBloc, cin);
+    }*/
+    @PostMapping("/add")
+    public ResponseEntity<Reservation> addReservation(@RequestParam long idBloc, @RequestParam long cin) {
+        try {
+            Reservation reservation = reservationServicaAvancé.ajouterReservation(idBloc, cin);
+            return new ResponseEntity<>(reservation, HttpStatus.CREATED);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (CapaciteMaxAtteinteException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

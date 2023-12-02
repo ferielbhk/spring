@@ -13,8 +13,14 @@ import tn.esprit.twin.springboot1.repository.ChambreRepository;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import static org.antlr.v4.runtime.misc.Utils.count;
+
 @Slf4j
 @AllArgsConstructor
 @Service
@@ -72,7 +78,7 @@ public class BlocServiceImpl implements  BlocService {
         List<Bloc> blocs = blocRepository.findAll();
         for (int i=0; i<blocs.size();i++) {
             log.info(blocs.get(i).getNomBloc() + ": " + blocs.get(i).getCapaciteBloc());
-            Set<Chambre> chambres =blocs.get(i).getChambre();
+            List<Chambre> chambres =blocs.get(i).getChambre();
             if (chambres!=null){
             chambres.stream().forEach(
                     chambre -> {
@@ -83,65 +89,70 @@ public class BlocServiceImpl implements  BlocService {
         }
     }
 
+    @Override
+    public byte[] generatePdfForBloc(Bloc bloc) throws IOException {
+        // Génère le PDF en utilisant la méthode auxiliaire
+        return generatePdf(bloc);
+    }
 
+    public byte[] generatePdf(Bloc bloc) throws IOException {
+        // Crée un nouveau document PDF
+        PDDocument document = new PDDocument();
 
+        // Ajoute une nouvelle page au document
+        PDPage page = new PDPage();
+        document.addPage(page);
 
+        // Utilise un flux de contenu pour ajouter du texte à la page
+        try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+            // Titre du PDF
+            addText(contentStream, "Chambres du Bloc : " + bloc.getNomBloc(), 20, 700, PDType1Font.HELVETICA_BOLD, 12);
 
+            // Liste des chambres
+            List<Chambre> chambres = List.copyOf(bloc.getChambre());
 
-        @Override
-        public byte[] generatePdfForBloc(Bloc bloc) throws IOException {
-            // Génère le PDF en utilisant la méthode auxiliaire
-            return generatePdf(bloc);
-        }
+            float currentYOffset = 580; // Ajustez la valeur initiale selon vos besoins
 
-        public byte[] generatePdf(Bloc bloc) throws IOException {
-            // Crée un nouveau document PDF
-            PDDocument document = new PDDocument();
-
-            // Ajoute une nouvelle page au document
-            PDPage page = new PDPage();
-            document.addPage(page);
-
-            // Utilise un flux de contenu pour ajouter du texte à la page
-            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
-                // Titre du PDF
-                contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
+            for (Chambre chambre : chambres) {
                 contentStream.beginText();
-                contentStream.newLineAtOffset(20, 700);
-                contentStream.showText("Chambres du Bloc : " + bloc.getNomBloc());
+                contentStream.newLineAtOffset(20, currentYOffset);
+
+                // Concatène le numéro de la chambre et son statut dans la même ligne
+                String chambreInfo = "Chambre numéro : " + chambre.getNumeroChambre() +
+                        " - Statut : " + (chambre.getReservations() != null && !chambre.getReservations().isEmpty() ? "Réservée" : "Non Réservée");
+
+                contentStream.showText(chambreInfo);
                 contentStream.newLineAtOffset(0, -20);
                 contentStream.endText();
 
-                // Liste des chambres
-                List<Chambre> chambres = List.copyOf(bloc.getChambre());
-
-                for (Chambre chambre : chambres) {
-                    contentStream.beginText();
-                    contentStream.newLineAtOffset(20, 700);
-                    contentStream.showText("Chambre numéro : " + chambre.getNumeroChambre());
-                    contentStream.newLineAtOffset(0, -20);
-
-                    if (chambre.getReservations() != null && !chambre.getReservations().isEmpty()) {
-                        // La chambre est réservée
-                        contentStream.showText("Statut : Réservée");
-                    } else {
-                        // La chambre n'est pas réservée
-                        contentStream.showText("Statut : Non Réservée");
-                    }
-
-                    contentStream.endText();
-                }
+                currentYOffset -= 40; // Ajustez la valeur en fonction de l'espacement souhaité entre les chambres
             }
-
-            // Convertit le document en tableau d'octets
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            document.save(byteArrayOutputStream);
-            document.close();
-
-            // Retourne le tableau d'octets représentant le fichier PDF
-            return byteArrayOutputStream.toByteArray();
         }
+
+        // Convertit le document en tableau d'octets
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        document.save(byteArrayOutputStream);
+        document.close();
+
+        // Retourne le tableau d'octets représentant le fichier PDF
+        return byteArrayOutputStream.toByteArray();
     }
+
+    private void addText(PDPageContentStream contentStream, String text, float xOffset, float yOffset, PDType1Font font, int fontSize) throws IOException {
+        contentStream.beginText();
+        if (font != null) {
+            contentStream.setFont(font, fontSize);
+        }
+        contentStream.newLineAtOffset(xOffset, yOffset);
+        contentStream.showText(text);
+        contentStream.newLineAtOffset(0, -20);
+        contentStream.endText();
+    }
+
+
+}
+
+
 
 
 
